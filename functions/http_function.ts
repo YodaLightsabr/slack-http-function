@@ -8,38 +8,76 @@ import { DefineFunction, Schema, SlackFunction } from "deno-slack-sdk/mod.ts";
  */
 export const SampleFunctionDefinition = DefineFunction({
   callback_id: "sample_function",
-  title: "Sample function",
-  description: "A sample function",
+  title: "Make an HTTP request",
+  description: "Interact with an external API over HTTP",
   source_file: "functions/http_function.ts",
   input_parameters: {
     properties: {
-      method: {
+      http_method: {
         type: Schema.types.string,
         description: "HTTP method to use",
       },
-      url: {
+      request_url: {
         type: Schema.types.string,
         description: "URL to fetch",
       },
-      headers: {
+      http_headers: {
         type: Schema.types.string,
-        description: "JSON string of headers to send",
+        description: "Headers to include in JSON format",
       },
-      body: {
+      request_body: {
         type: Schema.types.string,
-        description: "Body to send",
+        description: "Body to include with request",
+      },
+      transformation_a: {
+        type: Schema.types.string,
+        description: "Anonymous JS function to transform the response",
+      },
+      transformation_b: {
+        type: Schema.types.string,
+        description: "Anonymous JS function to transform the response",
+      },
+      transformation_c: {
+        type: Schema.types.string,
+        description: "Anonymous JS function to transform the response",
+      },
+      transformation_d: {
+        type: Schema.types.string,
+        description: "Anonymous JS function to transform the response",
       },
     },
-    required: ["method", "url"],
+    required: ["http_method", "request_url"],
   },
   output_parameters: {
     properties: {
-      response: {
+      raw_response: {
         type: Schema.types.string,
-        description: "Raw response recieved",
+        description: "Raw string response recieved",
+      },
+      custom_transformed_response_a: {
+        type: Schema.types.string,
+        description: "The first custom transformed response",
+      },
+      custom_transformed_response_b: {
+        type: Schema.types.string,
+        description: "The second custom transformed response",
+      },
+      custom_transformed_response_c: {
+        type: Schema.types.string,
+        description: "The third custom transformed response",
+      },
+      custom_transformed_response_d: {
+        type: Schema.types.string,
+        description: "The fourth custom transformed response",
       },
     },
-    required: ["response"],
+    required: [
+      "raw_response",
+      "custom_transformed_response_a",
+      "custom_transformed_response_b",
+      "custom_transformed_response_c",
+      "custom_transformed_response_d",
+    ],
   },
 });
 
@@ -53,32 +91,70 @@ export default SlackFunction(
   SampleFunctionDefinition,
   async (
     { inputs }: {
-      inputs: { method: string; url: string; headers?: string; body?: string };
+      inputs: {
+        http_method: string;
+        request_url: string;
+        http_headers?: string;
+        request_body?: string;
+        transformation_a?: string;
+        transformation_b?: string;
+        transformation_c?: string;
+        transformation_d?: string;
+      };
     },
   ) => {
-    const { method, url, headers, body } = inputs;
+    const {
+      http_method: method,
+      request_url: url,
+      http_headers,
+      request_body: body,
+      transformation_a,
+      transformation_b,
+      transformation_c,
+      transformation_d,
+    } = inputs;
 
-    let requestHeaders = {};
+    let headers = {};
     try {
-      requestHeaders = JSON.parse(headers || "{}");
+      headers = JSON.parse(http_headers || "{}");
     } catch (_err) {
       // Do nothing
     }
 
-    const requestObject = {
-      method,
-      headers: requestHeaders,
-      body,
-    };
-
     let response;
     try {
-      response = await fetch(url, requestObject).then((res) => res.text());
+      response = await fetch(
+        "https://slack-http-workflow-step-request-proxy.hackclub.dev/api",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            method,
+            headers,
+            body,
+            url,
+            transformations:
+              (transformation_a || transformation_b || transformation_c ||
+                  transformation_d)
+                ? {
+                  a: transformation_a,
+                  b: transformation_b,
+                  c: transformation_c,
+                  d: transformation_d,
+                }
+                : undefined,
+          }),
+        },
+      ).then((res) => res.json());
     } catch (err) {
       throw new Error(`Error fetching ${url}: ${err}`);
     }
 
     // Outputs are made available as variables for use in subsequent functions
-    return { outputs: { response } };
+    return {
+      outputs: response,
+    };
   },
 );

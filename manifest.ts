@@ -1,5 +1,5 @@
 import { Manifest } from "deno-slack-sdk/mod.ts";
-import { SampleFunctionDefinition } from "./functions/sample_function.ts";
+import { SampleFunctionDefinition } from "./functions/http_function.ts";
 
 /**
  * The app manifest contains the app's configuration. This
@@ -7,12 +7,14 @@ import { SampleFunctionDefinition } from "./functions/sample_function.ts";
  * https://api.slack.com/automation/manifest
  */
 export default Manifest({
-  name: "deno-function-template",
-  description: "A template for building standalone functions in Slack",
-  icon: "assets/default_new_app_icon.png",
+  name: "External APIs",
+  description: "Connect to external APIs from Slack",
+  icon: "assets/icon.png",
   workflows: [],
   functions: [SampleFunctionDefinition],
-  outgoingDomains: [],
+  outgoingDomains: [
+    "slack-http-workflow-step-request-proxy.hackclub.dev",
+  ],
   datastores: [],
   botScopes: [
     "commands",

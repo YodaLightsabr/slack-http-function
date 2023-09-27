@@ -1,1 +1,11 @@
-{}
+{
+  "apps": {
+    "T0266FRGM": {
+      "app_id": "A05TTFGQKBQ",
+      "IsDev": false,
+      "team_domain": "hackclub",
+      "team_id": "T0266FRGM"
+    }
+  },
+  "default": "hackclub"
+}
